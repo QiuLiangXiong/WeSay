@@ -1,4 +1,4 @@
-//
+ //
 //  AppDelegate.swift
 //  WeSay
 //
@@ -13,13 +13,38 @@ import CoreData
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
-
+    func swizzlingInstanceMethod(clzz: AnyClass, oldSelector: Selector, newSelector: Selector) {
+        let oldMethod = class_getInstanceMethod(clzz, oldSelector)
+        let newMethod = class_getInstanceMethod(clzz, newSelector)
+        method_exchangeImplementations(oldMethod, newMethod)
+        
+    }
+    func swizzlingClassMethod(clzz: AnyClass, oldSelector: Selector, newSelector: Selector) {
+        let oldMethod = class_getClassMethod(clzz, oldSelector)
+        let newMethod = class_getClassMethod(clzz, newSelector)
+        method_exchangeImplementations(oldMethod, newMethod)
+        
+    }
 
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
         // Override point for customization after application launch.
+        SMS_SDK.registerApp("8194e2b29c12", withSecret: "4bebc61ceb71b556670655e49d0ba25b")
+        ShareSDKUtil.initShareSDK()
+        
+        //强行替代
+        swizzlingInstanceMethod(UIViewController.self, oldSelector: "viewDidLayoutSubviews", newSelector: "viewDidLayoutSubviewsWithStyleSet")
+        swizzlingInstanceMethod(UIView.self, oldSelector: "addSubview:", newSelector: "addSubviewWithStyleSet:")
         return true
     }
 
+    func application(application: UIApplication, handleOpenURL: NSURL)->Bool{
+        return ShareSDK.handleOpenURL(handleOpenURL, wxDelegate: self)
+    }
+    
+    func  application(application: UIApplication, openURL: NSURL, sourceApplication: String?, annotation: AnyObject?)->Bool {
+         return ShareSDK.handleOpenURL(openURL, sourceApplication: sourceApplication, annotation: annotation, wxDelegate: self)
+    }
+    
     func applicationWillResignActive(application: UIApplication) {
         // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
         // Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
